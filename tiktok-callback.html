@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head><title>TikTok Auth Callback</title></head>
+<body>
+<p>Authorizing TikTok... please wait.</p>
+<script>
+// Grab the code from URL and forward to local proxy
+const params = new URLSearchParams(window.location.search);
+const code = params.get('code');
+const state = params.get('state');
+const error = params.get('error');
+if (error) {
+  document.body.innerHTML = '<h2>❌ Error: ' + error + '</h2><p>Close this window and try again.</p>';
+} else if (code) {
+  document.body.innerHTML = '<h2>✅ Got auth code! Sending to local server...</h2>';
+  // Try multiple local addresses
+  const targets = ['http://localhost:3001/tiktok/token', 'http://127.0.0.1:3001/tiktok/token'];
+  fetch(targets[0], {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      code,
+      redirect_uri: 'https://yulintang05-byte.github.io/luckylefty-legal/tiktok-callback.html'
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.access_token) {
+      document.body.innerHTML = '<h2>🎉 TikTok Connected!</h2><p>Access token saved. You can close this window.</p><p>Return to: <a href="http://localhost:3001/ai-dashboard.html">Dashboard</a></p>';
+    } else {
+      document.body.innerHTML = '<h2>⚠️ Token exchange issue</h2><pre>' + JSON.stringify(d,null,2) + '</pre><p>Code: <strong>' + code + '</strong></p><p>Manually paste this code at localhost:3001/tiktok-auth.html</p>';
+    }
+  })
+  .catch(e => {
+    // CORS blocked - show code for manual entry
+    document.body.innerHTML = '<h2>✅ Auth Code Received!</h2><p>Copy this code and paste it at your dashboard:</p><p style="background:#f0f0f0;padding:12px;font-family:monospace;word-break:break-all;font-size:14px">' + code + '</p><p><a href="http://localhost:3001/tiktok-auth.html?code=' + code + '">Click here to complete auth automatically</a></p>';
+  });
+}
+</script>
+</body>
+</html>
