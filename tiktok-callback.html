@@ -1,21 +1,33 @@
 <!DOCTYPE html>
 <html>
-<head><title>Connecting TikTok...</title>
-<style>body{font-family:Arial;text-align:center;padding:60px;background:#080c14;color:#00f5ff;}</style>
+<head><title>Connecting...</title>
+<style>body{background:#080c14;color:#00f5ff;font-family:monospace;text-align:center;padding:60px;}</style>
 </head>
 <body>
-<h2>⚡ Connecting TikTok to LuckyLefty Empire...</h2>
-<p id="status">Transferring authorization...</p>
+<h2>⚡ Authorizing TikTok...</h2>
+<p id="s">Sending code to empire...</p>
 <script>
-const params = new URLSearchParams(window.location.search);
-const code = params.get('code');
-const state = params.get('state');
-if (code) {
-  document.getElementById('status').textContent = 'Got code! Redirecting to dashboard...';
-  // Redirect to localhost with the code
-  window.location.href = 'http://localhost:3001/tiktok/callback?code=' + code + '&state=' + (state||'');
+const p=new URLSearchParams(window.location.search);
+const code=p.get('code');
+if(code){
+  document.getElementById('s').textContent='Got code! Exchanging for token...';
+  fetch('http://localhost:3001/tiktok/exchange',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({code})
+  }).then(r=>r.json()).then(d=>{
+    if(d.access_token){
+      document.getElementById('s').textContent='✅ TikTok Connected! You can close this tab.';
+      document.body.style.background='#0a1a0a';
+    } else {
+      document.getElementById('s').textContent='Error: '+JSON.stringify(d);
+    }
+  }).catch(e=>{
+    // Fallback: redirect to localhost
+    window.location.href='http://localhost:3001/tiktok/callback?code='+encodeURIComponent(code);
+  });
 } else {
-  document.getElementById('status').textContent = 'Error: ' + (params.get('error') || 'No code received');
+  document.getElementById('s').textContent='Error: '+p.get('error','no code');
 }
 </script>
 </body>
